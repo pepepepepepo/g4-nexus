@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gemma4_tribe</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #6b7080;
+    --koyomi: #a8c4e0;
+    --mochi: #f4c2e0;
+    --jun: #b8e0c4;
+    --uruu: #e0d0a8;
+    --accent: #5b8dd9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 600; color: var(--koyomi); }
+  header .tag {
+    font-size: 0.7rem;
+    background: var(--border);
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: var(--muted);
+  }
+
+  /* ── Input area ── */
+  .input-area {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+  .input-area textarea {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    resize: none;
+    min-height: 60px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .input-area textarea:focus { outline: none; border-color: var(--accent); }
+  .input-area button {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    align-self: flex-end;
+    transition: opacity 0.2s;
+  }
+  .input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Workers row ── */
+  .workers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    border-bottom: 1px solid var(--border);
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .worker-card {
+    background: var(--surface);
+    padding: 16px;
+    height: 280px;
+    overflow-y: auto;
+    position: relative;
+    scroll-behavior: smooth;
+  }
+  .worker-card::-webkit-scrollbar { width: 4px; }
+  .worker-card::-webkit-scrollbar-track { background: transparent; }
+  .worker-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .worker-card .label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #card-mochi .label { color: var(--mochi); }
+  #card-jun   .label { color: var(--jun);   }
+  #card-uruu  .label { color: var(--uruu);  }
+  .worker-card .content {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .worker-card .elapsed {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* ── Koyomi integration ── */
+  .koyomi-area {
+    padding: 20px 24px;
+    flex: 1;
+  }
+  .koyomi-area .label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--koyomi);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .koyomi-area .content {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    color: var(--text);
+  }
+  .koyomi-area .timing {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* ── History sidebar ── */
+  .layout { display: flex; flex: 1; min-height: 0; }
+  .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .sidebar {
+    width: 220px;
+    border-left: 1px solid var(--border);
+    padding: 12px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar h3 { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+  .session-item {
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 4px 0;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    word-break: break-all;
+  }
+  .session-item:hover { color: var(--koyomi); }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error { color: #e07070; font-size: 0.85rem; padding: 8px 24px; }
+</style>
+</head>
+<body>
+
+<header>
+  <span>📅</span>
+  <h1>gemma4_tribe</h1>
+  <span class="tag">E4B × 1 + E2B × 3</span>
+  <span class="tag" id="status-tag">ready</span>
+</header>
+
+<div class="layout">
+  <div class="main-col">
+    <div class="input-area">
+      <textarea id="input" placeholder="Ask anything..." rows="2"></textarea>
+      <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+
+    <div class="workers">
+      <div class="worker-card" id="card-mochi">
+        <div class="label">🌕 Mochi <span class="elapsed" id="elapsed-mochi"></span></div>
+        <div class="content" id="content-mochi">—</div>
+      </div>
+      <div class="worker-card" id="card-jun">
+        <div class="label">🗓️ Jun <span class="elapsed" id="elapsed-jun"></span></div>
+        <div class="content" id="content-jun">—</div>
+      </div>
+      <div class="worker-card" id="card-uruu">
+        <div class="label">🗝️ Uruu <span class="elapsed" id="elapsed-uruu"></span></div>
+        <div class="content" id="content-uruu">—</div>
+      </div>
+    </div>
+
+    <div class="koyomi-area">
+      <div class="label">📅 Koyomi <span id="spinner-koyomi"></span></div>
+      <div class="content" id="content-koyomi">—</div>
+      <div class="timing" id="timing-koyomi"></div>
+    </div>
+
+    <div class="error" id="error-area"></div>
+  </div>
+
+  <div class="sidebar">
+    <h3>Sessions</h3>
+    <div id="session-list"></div>
+  </div>
+</div>
+
+<script>
+  const API = '';  // same origin
+
+  async function sendMessage() {
+    const input = document.getElementById('input');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    setLoading(true);
+    clearResults();
+
+    try {
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg}),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderResult(data);
+      loadSessions();
+    } catch (e) {
+      document.getElementById('error-area').textContent = `Error: ${e.message}`;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResult(data) {
+    const workers = {mochi: 0, jun: 1, uruu: 2};
+    for (const [name, idx] of Object.entries(workers)) {
+      const w = data.workers[idx];
+      document.getElementById(`content-${name}`).textContent =
+        w.error ? `❌ ${w.error}` : (w.content || '(empty)');
+      document.getElementById(`elapsed-${name}`).textContent =
+        `${w.elapsed}s`;
+    }
+    document.getElementById('content-koyomi').textContent =
+      data.koyomi || '(empty)';
+    document.getElementById('timing-koyomi').textContent =
+      `Total: ${data.total_elapsed}s`;
+    document.getElementById('spinner-koyomi').innerHTML = '';
+  }
+
+  function clearResults() {
+    ['mochi','jun','uruu'].forEach(n => {
+      document.getElementById(`content-${n}`).textContent = '...';
+      document.getElementById(`elapsed-${n}`).textContent = '';
+    });
+    document.getElementById('content-koyomi').textContent = '...';
+    document.getElementById('timing-koyomi').textContent = '';
+    document.getElementById('spinner-koyomi').innerHTML = '<span class="spinner"></span>';
+    document.getElementById('error-area').textContent = '';
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('send-btn');
+    const tag = document.getElementById('status-tag');
+    btn.disabled = on;
+    tag.textContent = on ? 'thinking...' : 'ready';
+  }
+
+  async function loadSessions() {
+    try {
+      const res = await fetch(`${API}/sessions`);
+      const files = await res.json();
+      const list = document.getElementById('session-list');
+      list.innerHTML = files.map(f =>
+        `<div class="session-item" onclick="loadSession('${f}')">${f.replace('.json','')}</div>`
+      ).join('');
+    } catch (_) {}
+  }
+
+  async function loadSession(filename) {
+    try {
+      const res = await fetch(`${API}/sessions/${filename}`);
+      const data = await res.json();
+      document.getElementById('input').value = data.user_message || '';
+      renderResult(data);
+    } catch (e) {
+      document.getElementById('error-area').textContent = `Error loading session: ${e.message}`;
+    }
+  }
+
+  // Ctrl+Enter to send
+  document.getElementById('input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendMessage();
+  });
+
+  // Load sessions on start
+  loadSessions();
+</script>
+</body>
+</html>
