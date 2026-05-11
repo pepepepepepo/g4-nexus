@@ -91,7 +91,7 @@ LEADER_OPTIONS = {
 # ─── Language toggle ──────────────────────────────────────
 # True  = respond in Japanese (personal use)
 # False = respond in English  (article / external)
-RESPOND_IN_JAPANESE = True
+RESPOND_IN_JAPANESE = False
 
 @dataclass
 class WorkerResult:
