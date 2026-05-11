@@ -12,7 +12,7 @@ tags: devchallenge, gemmachallenge, gemma
 
 ## What I Built
 
-[g4-nexus](https://github.com/pepepepepepo/g4-nexus) is a parallel persona engine built on Google's Gemma 4 models. Instead of asking one model one question, it asks **four specialized personas simultaneously** — then synthesizes their answers into a single integrated response.
+[g4-nexus](https://github.com/pepepepepepo/g4-nexus) is a parallel persona engine built on Google's Gemma 4 models. Instead of asking one model one question, it asks **three specialized worker personas in parallel** — then a fourth leader persona synthesizes their answers into a single integrated response.
 
 The four personas:
 
@@ -39,6 +39,8 @@ This is useful for: decision support, design reviews, multi-stakeholder analysis
 ---
 
 ## Demo
+
+*The following demo illustrates the workflow: input → three parallel worker outputs → leader synthesis.*
 
 **Prompt sent:** `"I am feeling stuck on a project. I have been working on it for weeks and I can not seem to make progress. What should I do?"`
 
@@ -129,7 +131,7 @@ The choice of E4B (Effective 4B — ~4.5B total params) and E2B (Effective 2B �
 **Why not the 31B Dense model?**
 1. **Accessibility** — E2B/E4B run on consumer hardware without cloud costs. The 31B would require hardware most users don't have.
 2. **Specialization** — Smaller models are easier to steer into a narrow role via system prompts. E2B workers stay in their lane (emotion, logic, analysis) reliably.
-3. **Parallel speed** — Three E2B workers fit comfortably alongside the E4B leader. Running four 31B instances in parallel is not practical locally.
+3. **Parallel speed** — Three E2B workers can run in a consumer local setup alongside the E4B leader, with Ollama offloading layers to system RAM when needed. Running four 31B instances in parallel is not practical locally.
 
 **Why two different model sizes?**
 
@@ -158,6 +160,8 @@ async def run_tribe(user_message: str) -> dict:
 This is **not** a chain. The workers do not see each other's answers — they work independently, in parallel, from the same user input. This is what Gemma 4's small, steerable models unlock: you can run multiple specialized instances simultaneously on a single consumer GPU.
 
 On an RTX 4070 Ti (12GB VRAM) with 48GB system RAM: workers finish in ~9s, leader integrates in ~25s, **total ~31s**.
+
+This architecture specifically leverages the steerability of Gemma 4's small models to maximize parallelism on consumer hardware — making specialized, multi-perspective AI accessible without cloud infrastructure.
 
 ---
 
